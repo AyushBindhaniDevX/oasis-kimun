@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { LogOut, Mail, Zap, Search, ShieldCheck, Globe, FileText, Loader2 } from 'lucide-react'
+import { LogOut, Mail, Zap, Search, ShieldCheck, Globe, FileText, Loader2, User } from 'lucide-react'
 import { ref, onValue, update } from 'firebase/database'
 import { getDatabase } from '@/lib/firebase'
 import { evaluateApplication } from '@/lib/ai-service'
@@ -108,7 +108,6 @@ export default function AdminPage() {
       const result = await evaluateApplication(app)
       const db = getDatabase()
       
-      // Update result in Firebase
       await update(ref(db, `applications/${app.uid}`), {
         aiScore: result.score,
         status: 'under_review'
@@ -155,7 +154,6 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-8 py-12 space-y-8">
-        {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
             { label: 'Applications', count: applications.length, color: 'text-slate-900' },
@@ -170,7 +168,6 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* List View */}
         <Card className="border-slate-100 shadow-sm bg-white overflow-hidden">
           <div className="p-4 flex gap-4 bg-slate-50/50 border-b border-slate-100">
              <div className="relative flex-1">
@@ -200,7 +197,7 @@ export default function AdminPage() {
             <table className="w-full text-left">
               <thead className="bg-slate-50/30 border-b border-slate-50 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
                 <tr>
-                  <th className="p-4">Candidate</th>
+                  <th className="p-4">Candidate Profile</th>
                   <th className="p-4">Merit Score</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-right">Dossier</th>
@@ -208,16 +205,17 @@ export default function AdminPage() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredApplications.map((app) => (
-                  <tr key={app.uid} className="hover:bg-slate-50/20">
+                  <tr key={app.uid} className="hover:bg-slate-50/20 group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 border border-slate-100">
+                        <Avatar className="h-9 w-9 border border-slate-100 shadow-sm">
                           <AvatarImage src={app.photoURL} />
                           <AvatarFallback className="bg-slate-50 text-blue-600 font-bold text-[10px] uppercase">{app.fullName?.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900 leading-none uppercase">{app.fullName}</p>
-                          <p className="text-[10px] text-slate-400 mt-1 font-medium tracking-tight uppercase">{app.ocRole}</p>
+                        <div className="flex flex-col">
+                          <p className="text-sm font-bold text-slate-900 leading-none uppercase tracking-tight">{app.fullName}</p>
+                          <p className="text-[10px] text-blue-600 mt-1 font-semibold">{app.email}</p>
+                          <p className="text-[9px] text-slate-400 mt-0.5 font-medium tracking-tight uppercase">{app.school}</p>
                         </div>
                       </div>
                     </td>
@@ -233,7 +231,7 @@ export default function AdminPage() {
                         <button 
                           onClick={() => handleAiEvaluate(app)}
                           disabled={evaluatingId === app.uid}
-                          className="text-slate-300 hover:text-blue-500"
+                          className="text-slate-300 hover:text-blue-500 transition-colors"
                         >
                           {evaluatingId === app.uid ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                         </button>
@@ -253,24 +251,68 @@ export default function AdminPage() {
                       </Select>
                     </td>
                     <td className="p-4 text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-blue-600"><FileText className="w-4 h-4" /></Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl border-none">
-                          <DialogHeader className="border-b border-slate-50 pb-4">
-                             <div className="flex items-center gap-2 mb-1">
-                               <ShieldCheck className="w-4 h-4 text-blue-600" />
-                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Secretariat Dossier</span>
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Profile View Icon */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all">
+                              <User className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl border-none shadow-2xl p-0 overflow-hidden rounded-[2rem]">
+                            <div className="bg-blue-600 h-24 w-full relative">
+                              <div className="absolute -bottom-12 left-8">
+                                <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
+                                  <AvatarImage src={app.photoURL} />
+                                  <AvatarFallback className="bg-slate-100 text-blue-600 font-bold text-2xl uppercase">{app.fullName?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                              </div>
                             </div>
-                            <DialogTitle className="text-2xl font-bold uppercase tracking-tight">{app.fullName}</DialogTitle>
-                          </DialogHeader>
-                          <div className="py-4 space-y-4">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Statement of Intent</p>
-                            <p className="text-sm bg-slate-50 p-6 rounded-2xl italic text-slate-600 leading-relaxed">"{app.motivation}"</p>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                            <div className="pt-16 pb-10 px-8">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{app.fullName}</h2>
+                                  <p className="text-blue-600 font-bold text-sm">{app.email}</p>
+                                </div>
+                                <Badge variant="outline" className={`uppercase font-black text-[10px] tracking-widest px-3 py-1 ${STATUS_THEMES[app.status]}`}>
+                                  {app.status.replace('_', ' ')}
+                                </Badge>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-8 mt-10">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Academic Institution</label>
+                                  <p className="text-sm font-bold text-slate-900 uppercase">{app.school}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Applied Department</label>
+                                  <p className="text-sm font-bold text-blue-600 uppercase italic">{app.ocRole}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Merit Analysis</label>
+                                  <p className="text-sm font-black text-slate-900 uppercase">{app.aiScore ? `${app.aiScore}% Match` : 'Not Evaluated'}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Reference ID</label>
+                                  <p className="text-xs font-mono text-slate-500 uppercase">{app.uid.substring(0, 12)}</p>
+                                </div>
+                              </div>
+
+                              <div className="mt-10 space-y-3">
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Motivation & Vision</label>
+                                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-sm italic leading-relaxed text-slate-600 shadow-inner">
+                                  "{app.motivation}"
+                                </div>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* Document Icon */}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all">
+                          <FileText className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
