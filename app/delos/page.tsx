@@ -23,7 +23,8 @@ import {
   GraduationCap, 
   Crown, 
   TrendingUp,
-  ShieldCheck // Added to fix ReferenceError
+  ShieldCheck,
+  ArrowRight // <--- ADDED THIS TO FIX THE BUILD ERROR
 } from 'lucide-react'
 import Link from 'next/link'
 
