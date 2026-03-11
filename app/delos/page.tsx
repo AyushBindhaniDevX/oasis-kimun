@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,9 +12,10 @@ import {
 import Link from 'next/link'
 
 // --- SUPABASE CONFIGURATION ---
-// Replace these with your actual keys from Supabase Dashboard
-const NEXT_PUBLIC_SUPABASE_URL = "https://whenyhkzmhgdrvukgbxm.supabase.co"
-const NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZW55aGt6bWhnZHJ2dWtnYnhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODY3NzksImV4cCI6MjA4NzI2Mjc3OX0.6yfUMmN1rr1hQ5b4hv4l2goJQJswZfJNpV3vgZsONRY"
+// Using Environment Variables is safer for Vercel deployments.
+// Make sure to add these in your Vercel Project Settings.
+const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://whenyhkzmhgdrvukgbxm.supabase.co"
+const NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZW55aGt6bWhnZHJ2dWtnYnhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODY3NzksImV4cCI6MjA4NzI2Mjc3OX0.6yfUMmN1rr1hQ5b4hv4l2goJQJswZfJNpV3vgZsONRY"
 
 const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
@@ -38,7 +39,7 @@ export default function DelegateLookup() {
       .limit(8)
 
     if (sbError) {
-      setError("Database connection failed.")
+      setError("Database connection failed. Please check your network.")
     } else {
       setDelegates(data || [])
       if (data?.length === 0) setError("No delegate found with those details.")
@@ -99,8 +100,8 @@ export default function DelegateLookup() {
                 className="w-full text-left p-5 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-xl hover:shadow-blue-50 transition-all flex items-center justify-between group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors font-bold">
-                    {d.name[0]}
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors font-bold uppercase">
+                    {d.name ? d.name[0] : '?'}
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{d.name}</h4>
@@ -113,7 +114,7 @@ export default function DelegateLookup() {
           </div>
         )}
 
-        {/* Detailed Profile View + Blacklist Logic */}
+        {/* Detailed Profile View */}
         {selectedDelegate && (
           <div className="animate-in zoom-in-95 duration-300">
             <Button variant="ghost" onClick={() => setSelectedDelegate(null)} className="mb-6 text-slate-400 hover:text-slate-900 text-[10px] font-bold uppercase tracking-widest">
@@ -121,7 +122,6 @@ export default function DelegateLookup() {
             </Button>
 
             {selectedDelegate.status === 'blacklisted' ? (
-              /* BLACKLISTED VIEW */
               <Card className="border-red-100 bg-red-50/30 overflow-hidden rounded-[2.5rem] border-2">
                 <CardContent className="p-12 text-center space-y-6">
                   <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto text-red-600 animate-pulse">
@@ -130,7 +130,7 @@ export default function DelegateLookup() {
                   <div className="space-y-2">
                     <h2 className="text-2xl font-bold text-red-900 uppercase tracking-tighter">Access Restricted</h2>
                     <p className="text-red-700/70 text-sm max-w-xs mx-auto">
-                      Delegate <span className="font-bold">"{selectedDelegate.name}"</span> has been flagged in our system. Access to portal features is currently suspended.
+                      Delegate <span className="font-bold">"{selectedDelegate.name}"</span> has been flagged. Access to portal features is currently suspended.
                     </p>
                   </div>
                   <div className="pt-4">
@@ -139,7 +139,6 @@ export default function DelegateLookup() {
                 </CardContent>
               </Card>
             ) : (
-              /* ACTIVE DELEGATE VIEW */
               <Card className="border-none shadow-2xl shadow-blue-100/50 overflow-hidden rounded-[2.5rem] bg-white border border-slate-50">
                 <div className="h-40 bg-slate-900 relative flex items-end px-10 pb-6">
                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0z' fill='none'/%3E%3Ccircle cx='2' cy='2' r='1' fill='%23fff'/%3E%3C/svg%3E")` }} />
@@ -194,7 +193,8 @@ function StatBox({ icon, label, value, color }: any) {
   return (
     <div className="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 hover:scale-105 transition-transform">
       <div className={`w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center mb-3 ${color}`}>
-        {Object.cloneElement(icon, { className: "w-4 h-4" })}
+        {/* FIXED: Using React.cloneElement correctly */}
+        {React.cloneElement(icon, { className: "w-4 h-4" })}
       </div>
       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">{label}</p>
       <p className="text-sm font-bold text-slate-900 truncate">{value}</p>
@@ -206,7 +206,7 @@ function InfoRow({ label, value }: any) {
   return (
     <div className="flex justify-between items-center py-1">
       <span className="text-[10px] font-bold text-slate-400 uppercase">{label}</span>
-      <span className="text-xs font-semibold text-slate-700">{value}</span>
+      <span className="text-xs font-semibold text-slate-700 truncate ml-4">{value}</span>
     </div>
   )
 }
