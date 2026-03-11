@@ -6,9 +6,24 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { 
-  Search, Trophy, Briefcase, School, User, Hash, 
-  Star, ArrowLeft, ShieldAlert, CheckCircle2, Lock,
-  Award, Medal, Zap, GraduationCap, Crown, TrendingUp
+  Search, 
+  Trophy, 
+  Briefcase, 
+  School, 
+  User, 
+  Hash, 
+  Star, 
+  ArrowLeft, 
+  ShieldAlert, 
+  CheckCircle2, 
+  Lock,
+  Award, 
+  Medal, 
+  Zap, 
+  GraduationCap, 
+  Crown, 
+  TrendingUp,
+  ShieldCheck // <--- Make sure this is here!
 } from 'lucide-react'
 import Link from 'next/link'
 
