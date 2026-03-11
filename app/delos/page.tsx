@@ -196,7 +196,7 @@ export default function OasisPortal() {
               </p>
             </div>
             <div className="space-y-4">
-              <Link href="mailto:secretariat@kimun.org" className="block p-6 bg-blue-600 hover:bg-blue-700 rounded-2xl transition-all text-center">
+              <Link href="mailto:kalingainternationalmodelun@gmail.com" className="block p-6 bg-blue-600 hover:bg-blue-700 rounded-2xl transition-all text-center">
                 <span className="font-bold uppercase text-[10px] tracking-[0.2em] text-white">Contact Registrar Office</span>
               </Link>
               <p className="text-[9px] text-center text-slate-500 uppercase tracking-widest font-medium italic">Identity verification required for all adjustments.</p>
