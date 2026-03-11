@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,7 +64,7 @@ export default function OasisPortal() {
   const maskData = (str: string) => str ? `${str.substring(0, 3)}••••••••` : "Hidden";
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-100">
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-100 font-sans">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md h-20 flex items-center justify-between px-6 md:px-12">
         <div className="flex items-center gap-3">
@@ -91,10 +91,10 @@ export default function OasisPortal() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
             </span>
-            Archive Live
+            Archive Connection Active
           </div>
-          <h1 className="text-5xl font-light tracking-tight text-slate-900">Delegate <span className="font-semibold italic">Verification.</span></h1>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium">Verify credentials and performance standings in the KIMUN Global Archive.</p>
+          <h1 className="text-5xl font-light tracking-tight text-slate-900 leading-tight">Identity <span className="font-semibold italic">Archive.</span></h1>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium">Verify credentials and performance history in the Centralized Database.</p>
         </div>
 
         {/* Search Input */}
@@ -110,7 +110,7 @@ export default function OasisPortal() {
             />
           </div>
           <Button onClick={searchDelegates} disabled={loading} className="h-16 px-10 bg-slate-900 hover:bg-blue-600 text-white rounded-3xl font-bold transition-all uppercase text-[10px] tracking-widest shadow-xl">
-            {loading ? "querying..." : "Search DB"}
+            {loading ? "querying..." : "Verify Record"}
           </Button>
         </div>
 
@@ -128,7 +128,7 @@ export default function OasisPortal() {
                 </div>
                 <div className="text-right flex items-center gap-4">
                   <div className="hidden sm:block">
-                    <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-1">Score</p>
+                    <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest leading-none mb-1">Archive Score</p>
                     <p className="text-xl font-black text-blue-600 leading-none">{d.ranking_score || 0}</p>
                   </div>
                   <ArrowRight className="w-5 h-5 text-slate-200 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
@@ -143,10 +143,10 @@ export default function OasisPortal() {
             )}
           </div>
         ) : (
-          /* SELECTED DELEGATE IDENTITY CARD */
-          <div className="animate-in zoom-in-95 duration-500">
+          /* SELECTED DELEGATE CARD */
+          <div className="animate-in zoom-in-95 duration-500 max-w-5xl mx-auto">
             <Button variant="ghost" onClick={() => setSelectedDelegate(null)} className="mb-8 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-blue-600 p-0 flex items-center gap-2">
-              <ArrowLeft className="w-3 h-3" /> Back to Search
+              <ArrowLeft className="w-3 h-3" /> Back to List
             </Button>
 
             {selectedDelegate.status === 'blacklisted' ? (
@@ -158,7 +158,7 @@ export default function OasisPortal() {
                   <div className="space-y-3">
                     <h2 className="text-3xl font-black text-red-900 uppercase tracking-tighter">Security Restriction</h2>
                     <p className="text-red-700/70 text-sm max-w-md mx-auto leading-relaxed">
-                      Archive entry for <span className="font-bold text-red-900">"{selectedDelegate.name}"</span> has been flagged. Identity verification is currently suspended.
+                      Archive entry for <span className="font-bold text-red-900">"{selectedDelegate.name}"</span> has been flagged for violations. Verification is currently suspended.
                     </p>
                   </div>
                 </CardContent>
@@ -176,24 +176,23 @@ export default function OasisPortal() {
                           <h2 className="text-4xl font-bold tracking-tighter">{selectedDelegate.name}</h2>
                           {selectedDelegate.verified && <CheckCircle2 className="w-6 h-6 text-blue-400 fill-blue-400/10" />}
                         </div>
-                        <p className="text-blue-400 text-[10px] font-bold uppercase tracking-[0.4em] flex items-center gap-2">
-                           {selectedDelegate.institution || "Global Delegate"}
+                        <p className="text-blue-400 text-[10px] font-bold uppercase tracking-[0.4em] flex items-center gap-2 italic">
+                           {selectedDelegate.institution || "Global Diplomat"}
                         </p>
                       </div>
                       <div className="text-right hidden sm:block">
-                        <div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center gap-2 text-green-400">
+                        <div className="px-5 py-2.5 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center gap-2 text-green-400">
                           <ShieldCheck className="w-4 h-4" />
-                          <span className="text-[9px] font-black uppercase tracking-widest">Clear Record</span>
+                          <span className="text-[9px] font-black uppercase tracking-widest">Security Cleared</span>
                         </div>
                       </div>
                    </div>
                 </div>
 
                 <CardContent className="p-12">
-                  {/* EXPANDED STAT GRID TO SHOW HIGH COMM & SPECIAL MENTION */}
                   <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-12">
-                    <StatBox icon={<Zap />} label="Global Score" value={selectedDelegate.ranking_score || 0} color="text-yellow-500" />
-                    <StatBox icon={<GraduationCap />} label="MUN Exp" value={`${selectedDelegate.mun_experience || 0}`} color="text-blue-600" />
+                    <StatBox icon={<Zap />} label="Score" value={selectedDelegate.ranking_score || 0} color="text-yellow-500" />
+                    <StatBox icon={<GraduationCap />} label="Exp" value={`${selectedDelegate.mun_experience || 0}`} color="text-blue-600" />
                     <StatBox icon={<Award />} label="Best Del" value={selectedDelegate.best_delegate || 0} color="text-purple-600" />
                     <StatBox icon={<Trophy />} label="High Comm" value={selectedDelegate.high_commendation || 0} color="text-orange-500" />
                     <StatBox icon={<Medal />} label="Spl Mention" value={selectedDelegate.special_mention || 0} color="text-slate-500" />
@@ -210,19 +209,34 @@ export default function OasisPortal() {
                         <InfoRow label="Verified Phone" value={maskData(selectedDelegate.phone)} />
                       </div>
                     </div>
+                    
+                    {/* DISCIPLINARY HISTORY LOGIC */}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-bold text-slate-900 uppercase tracking-[0.4em] flex items-center gap-2">
-                        <ShieldCheck className="w-3 h-3 text-blue-600" /> Integrity Status
+                        <ShieldAlert className="w-3 h-3 text-blue-600" /> Security Archive
                       </h4>
-                      <div className="p-6 bg-green-50/30 rounded-[2rem] border border-green-100 flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600 shrink-0">
-                          <CheckCircle2 className="w-5 h-5" />
+                      
+                      {selectedDelegate.disciplinary_history && selectedDelegate.disciplinary_history !== 'No disciplinary actions recorded.' ? (
+                        <div className="p-6 bg-red-50/50 rounded-[2rem] border border-red-100 flex items-start gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                            <AlertOctagon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-red-800 leading-tight mb-1 uppercase font-mono tracking-tighter">Action Recorded</p>
+                            <p className="text-[10px] text-red-700 leading-relaxed italic">"{selectedDelegate.disciplinary_history}"</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-green-800 leading-tight mb-1">No Disciplinary History</p>
-                          <p className="text-[9px] text-green-700/60 uppercase font-black tracking-tighter">Verified Official Record • KIMUN 2026</p>
+                      ) : (
+                        <div className="p-6 bg-green-50/30 rounded-[2rem] border border-green-100 flex items-start gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                            <CheckCircle2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-green-800 leading-tight mb-1">No Disciplinary History</p>
+                            <p className="text-[9px] text-green-700/60 uppercase font-black tracking-tighter">Verified Official Record • KIMUN 2026</p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -241,19 +255,19 @@ export default function OasisPortal() {
                   <ShieldCheck className="w-5 h-5" />
                   <h2 className="text-xs font-bold uppercase tracking-[0.4em]">Secretariat Support</h2>
                 </div>
-                <h3 className="text-3xl font-light leading-tight italic">Need to update your <span className="font-semibold underline decoration-blue-500 decoration-2 underline-offset-8 not-italic">Official Record?</span></h3>
-                <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-                  All corrections to experience scores require formal verification from the Registrar Office.
+                <h3 className="text-3xl font-light leading-tight italic leading-snug">Need to update your <span className="font-semibold underline decoration-blue-500 decoration-2 underline-offset-8 not-italic">Official Record?</span></h3>
+                <p className="text-slate-400 text-sm leading-relaxed max-w-sm font-medium">
+                  To maintain diplomatic integrity, all corrections to experience scores require formal verification from the Registrar.
                 </p>
               </div>
               <div className="space-y-5">
-                <Link href="mailto:kalingainternationalmodelun@gmail.com" className="block p-7 bg-blue-600 hover:bg-blue-700 rounded-3xl transition-all text-center group">
+                <Link href="mailto:kalingainternationalmodelun@gmail.com" className="block p-7 bg-blue-600 hover:bg-blue-700 rounded-3xl transition-all text-center group shadow-xl">
                   <span className="font-bold uppercase text-[10px] tracking-[0.2em] text-white flex items-center justify-center gap-2">
                     Contact Registrar Office <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </Link>
                 <div className="flex items-center justify-center gap-6 opacity-30">
-                  <span className="text-[8px] font-bold uppercase tracking-widest italic">Manual Audit System Active</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest italic">Manual Audit System Enabled</span>
                 </div>
               </div>
             </div>
