@@ -8,11 +8,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { 
   Search, 
   Trophy, 
-  Briefcase, 
   School, 
   User, 
   Hash, 
-  Star, 
   ArrowLeft, 
   ShieldAlert, 
   CheckCircle2, 
@@ -24,7 +22,8 @@ import {
   ShieldCheck,
   ArrowRight,
   AlertOctagon,
-  FileSearch
+  FileSearch,
+  Star
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -84,7 +83,7 @@ export default function OasisPortal() {
         </Link>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-20">
+      <main className="max-w-6xl mx-auto px-6 py-20">
         {/* Header Section */}
         <div className="text-center mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-4">
@@ -92,10 +91,10 @@ export default function OasisPortal() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
             </span>
-            Database Connection Active
+            Archive Live
           </div>
-          <h1 className="text-5xl font-light tracking-tight text-slate-900">Archive <span className="font-semibold italic">Lookup.</span></h1>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium">Access centralized diplomatic standings and verify delegate integrity records.</p>
+          <h1 className="text-5xl font-light tracking-tight text-slate-900">Delegate <span className="font-semibold italic">Verification.</span></h1>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto font-medium">Verify credentials and performance standings in the KIMUN Global Archive.</p>
         </div>
 
         {/* Search Input */}
@@ -111,13 +110,13 @@ export default function OasisPortal() {
             />
           </div>
           <Button onClick={searchDelegates} disabled={loading} className="h-16 px-10 bg-slate-900 hover:bg-blue-600 text-white rounded-3xl font-bold transition-all uppercase text-[10px] tracking-widest shadow-xl">
-            {loading ? "querying..." : "Verify Identity"}
+            {loading ? "querying..." : "Search DB"}
           </Button>
         </div>
 
         {/* Dynamic Display Logic */}
         {!selectedDelegate ? (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="max-w-4xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {delegates.map((d) => (
               <button key={d.uuid} onClick={() => setSelectedDelegate(d)} className="w-full text-left p-6 bg-white rounded-[2.5rem] border border-slate-100 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-50 transition-all flex items-center justify-between group">
                 <div className="flex items-center gap-6">
@@ -147,11 +146,10 @@ export default function OasisPortal() {
           /* SELECTED DELEGATE IDENTITY CARD */
           <div className="animate-in zoom-in-95 duration-500">
             <Button variant="ghost" onClick={() => setSelectedDelegate(null)} className="mb-8 text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-blue-600 p-0 flex items-center gap-2">
-              <ArrowLeft className="w-3 h-3" /> Back to Search Results
+              <ArrowLeft className="w-3 h-3" /> Back to Search
             </Button>
 
             {selectedDelegate.status === 'blacklisted' ? (
-              /* BLACKLISTED VIEW */
               <Card className="border-red-100 bg-red-50/20 overflow-hidden rounded-[3.5rem] border-2">
                 <CardContent className="p-16 text-center space-y-8">
                   <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto text-red-600 shadow-xl shadow-red-100 animate-pulse">
@@ -160,16 +158,12 @@ export default function OasisPortal() {
                   <div className="space-y-3">
                     <h2 className="text-3xl font-black text-red-900 uppercase tracking-tighter">Security Restriction</h2>
                     <p className="text-red-700/70 text-sm max-w-md mx-auto leading-relaxed">
-                      Archive entry for <span className="font-bold text-red-900">"{selectedDelegate.name}"</span> has been flagged for disciplinary violations. Identity verification is currently suspended.
+                      Archive entry for <span className="font-bold text-red-900">"{selectedDelegate.name}"</span> has been flagged. Identity verification is currently suspended.
                     </p>
-                  </div>
-                  <div className="pt-6">
-                    <div className="inline-block px-4 py-2 bg-red-900 text-white rounded-full text-[9px] font-bold uppercase tracking-[0.2em]">Blocked by Secretariat</div>
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              /* ACTIVE DELEGATE CARD */
               <Card className="border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] rounded-[3.5rem] overflow-hidden bg-white border border-slate-100">
                 <div className="h-48 bg-slate-900 relative flex items-end px-12 pb-10 overflow-hidden">
                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full -mr-20 -mt-20" />
@@ -183,7 +177,7 @@ export default function OasisPortal() {
                           {selectedDelegate.verified && <CheckCircle2 className="w-6 h-6 text-blue-400 fill-blue-400/10" />}
                         </div>
                         <p className="text-blue-400 text-[10px] font-bold uppercase tracking-[0.4em] flex items-center gap-2">
-                           {selectedDelegate.institution || "Global Independent Delegate"}
+                           {selectedDelegate.institution || "Global Delegate"}
                         </p>
                       </div>
                       <div className="text-right hidden sm:block">
@@ -196,10 +190,13 @@ export default function OasisPortal() {
                 </div>
 
                 <CardContent className="p-12">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-                    <StatBox icon={<Zap />} label="Score" value={selectedDelegate.ranking_score || 0} color="text-yellow-500" />
+                  {/* EXPANDED STAT GRID TO SHOW HIGH COMM & SPECIAL MENTION */}
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-12">
+                    <StatBox icon={<Zap />} label="Global Score" value={selectedDelegate.ranking_score || 0} color="text-yellow-500" />
                     <StatBox icon={<GraduationCap />} label="MUN Exp" value={`${selectedDelegate.mun_experience || 0}`} color="text-blue-600" />
                     <StatBox icon={<Award />} label="Best Del" value={selectedDelegate.best_delegate || 0} color="text-purple-600" />
+                    <StatBox icon={<Trophy />} label="High Comm" value={selectedDelegate.high_commendation || 0} color="text-orange-500" />
+                    <StatBox icon={<Medal />} label="Spl Mention" value={selectedDelegate.special_mention || 0} color="text-slate-500" />
                     <StatBox icon={<Hash />} label="Token ID" value={selectedDelegate.delegate_id || "DE-2026"} color="text-slate-400" />
                   </div>
 
@@ -223,7 +220,7 @@ export default function OasisPortal() {
                         </div>
                         <div>
                           <p className="text-[11px] font-bold text-green-800 leading-tight mb-1">No Disciplinary History</p>
-                          <p className="text-[9px] text-green-700/60 uppercase font-black tracking-tighter">Verified by Registrar Office • KIMUN 2026</p>
+                          <p className="text-[9px] text-green-700/60 uppercase font-black tracking-tighter">Verified Official Record • KIMUN 2026</p>
                         </div>
                       </div>
                     </div>
@@ -235,8 +232,8 @@ export default function OasisPortal() {
         )}
 
         {/* Support Section */}
-        <section className="mt-32">
-          <div className="bg-slate-900 rounded-[3.5rem] p-12 md:p-16 text-white relative overflow-hidden border border-white/5 shadow-2xl shadow-blue-900/20">
+        <section className="mt-32 max-w-5xl mx-auto">
+          <div className="bg-slate-900 rounded-[3.5rem] p-12 md:p-16 text-white relative overflow-hidden border border-white/5 shadow-2xl">
             <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full -mr-20 -mt-20" />
             <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-6">
@@ -246,18 +243,17 @@ export default function OasisPortal() {
                 </div>
                 <h3 className="text-3xl font-light leading-tight italic">Need to update your <span className="font-semibold underline decoration-blue-500 decoration-2 underline-offset-8 not-italic">Official Record?</span></h3>
                 <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-                  To maintain absolute diplomatic integrity, all corrections to experience scores require a formal verification from the Registrar.
+                  All corrections to experience scores require formal verification from the Registrar Office.
                 </p>
               </div>
               <div className="space-y-5">
-                <Link href="mailto:kalingainternationalmodelun@gmail.com" className="block p-7 bg-blue-600 hover:bg-blue-700 rounded-3xl transition-all text-center group shadow-xl shadow-blue-900/40">
+                <Link href="mailto:kalingainternationalmodelun@gmail.com" className="block p-7 bg-blue-600 hover:bg-blue-700 rounded-3xl transition-all text-center group">
                   <span className="font-bold uppercase text-[10px] tracking-[0.2em] text-white flex items-center justify-center gap-2">
                     Contact Registrar Office <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </Link>
                 <div className="flex items-center justify-center gap-6 opacity-30">
-                  <span className="text-[8px] font-bold uppercase tracking-widest">Encrypted Data</span>
-                  <span className="text-[8px] font-bold uppercase tracking-widest">Manual Audit</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest italic">Manual Audit System Active</span>
                 </div>
               </div>
             </div>
@@ -268,7 +264,6 @@ export default function OasisPortal() {
   )
 }
 
-// --- HELPER COMPONENTS ---
 function StatBox({ icon, label, value, color }: any) {
   return (
     <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-blue-50/50 group">
@@ -276,7 +271,7 @@ function StatBox({ icon, label, value, color }: any) {
         {React.cloneElement(icon, { className: "w-5 h-5" })}
       </div>
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-xl font-black text-slate-900">{value}</p>
+      <p className="text-xl font-black text-slate-900 truncate">{value}</p>
     </div>
   )
 }
@@ -285,7 +280,7 @@ function InfoRow({ label, value }: any) {
   return (
     <div className="flex justify-between items-center py-1">
       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
-      <span className="text-xs font-bold text-slate-900">{value}</span>
+      <span className="text-xs font-bold text-slate-900 truncate ml-4">{value}</span>
     </div>
   )
 }
