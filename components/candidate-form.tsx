@@ -32,7 +32,7 @@ import { getDatabase } from '@/lib/firebase'
 import { useAuth } from '@/context/auth-context'
 
 // Define the hard deadline: March 14, 2026, 11:59:59 PM
-const DEADLINE = new Date('2026-03-14T23:59:59').getTime()
+const DEADLINE = new Date('2026-03-15T23:59:59').getTime()
 
 const formSchema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
