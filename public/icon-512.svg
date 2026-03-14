@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="OASIS icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="#0b1020"/>
+  <rect x="52" y="52" width="408" height="408" rx="88" fill="url(#g)" opacity="0.18"/>
+  <path d="M155 150h80c75 0 126 45 126 106 0 62-51 106-126 106h-80V150zm74 180c43 0 71-28 71-74s-28-74-71-74h-18v148h18z" fill="#e2e8f0"/>
+</svg>

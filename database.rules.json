@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "applications": {
+      ".read": "root.child('admins').child(auth.uid).exists()",
+      "$uid": {
+        ".read": "auth.uid === $uid || root.child('admins').child(auth.uid).exists()",
+        ".write": "auth.uid === $uid || root.child('admins').child(auth.uid).exists()"
+      }
+    },
+    "admins": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "false"
+      }
+    },
+    "oc": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || root.child('applications').child(auth.uid).child('status').val() === 'approved')",
+      ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || root.child('applications').child(auth.uid).child('status').val() === 'approved')"
+    },
+    "messages": {
+      "$applicationUid": {
+        ".read": "auth != null && (auth.uid === $applicationUid || root.child('admins').child(auth.uid).exists())",
+        ".write": "auth != null && (auth.uid === $applicationUid || root.child('admins').child(auth.uid).exists())"
+      }
+    }
+  }
+}
