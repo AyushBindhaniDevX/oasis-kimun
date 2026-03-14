@@ -24,12 +24,15 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Sparkles, Check } from 'lucide-react'
+import { Loader2, Sparkles, Check, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { generateFormSuggestions } from '@/lib/ai-service'
-import { ref, set, get } from 'firebase/database'
+import { ref, set } from 'firebase/database'
 import { getDatabase } from '@/lib/firebase'
 import { useAuth } from '@/context/auth-context'
+
+// Define the hard deadline: March 14, 2026, 11:59:59 PM
+const DEADLINE = new Date('2026-03-14T23:59:59').getTime()
 
 const formSchema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -60,6 +63,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
   const { user } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [isExpired, setIsExpired] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, string>>({})
   const [loadingSuggestion, setLoadingSuggestion] = useState<string | null>(null)
 
@@ -74,8 +78,19 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
     },
   })
 
-  // If initialValues change (e.g., editing an existing application), reset form
-  React.useEffect(() => {
+  // Check deadline on mount and set up interval
+  useEffect(() => {
+    const checkStatus = () => {
+      if (Date.now() > DEADLINE) {
+        setIsExpired(true)
+      }
+    }
+    checkStatus()
+    const interval = setInterval(checkStatus, 10000) // Check every 10 seconds
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
     if (initialValues) {
       form.reset({
         fullName: initialValues.fullName || '',
@@ -85,7 +100,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
         motivation: initialValues.motivation || '',
       })
     }
-  }, [initialValues, user])
+  }, [initialValues, user, form])
 
   const handleGetSuggestion = async (fieldName: keyof FormValues) => {
     const currentValue = form.getValues(fieldName)
@@ -102,10 +117,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
         `KIMUN 2026 ${fieldName} field for ${form.getValues('school') || 'your school'}`
       )
       if (suggestion) {
-        setAiSuggestions(prev => ({
-          ...prev,
-          [fieldName]: suggestion
-        }))
+        setAiSuggestions(prev => ({ ...prev, [fieldName]: suggestion }))
         toast.success('AI suggestion ready!')
       }
     } catch (error) {
@@ -117,8 +129,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
 
   const applySuggestion = (fieldName: keyof FormValues, suggestion: string) => {
     const current = form.getValues(fieldName)
-    const updated = current ? `${current} ${suggestion}` : suggestion
-    form.setValue(fieldName, updated)
+    form.setValue(fieldName, current ? `${current} ${suggestion}` : suggestion)
     setAiSuggestions(prev => {
       const newSuggestions = { ...prev }
       delete newSuggestions[fieldName]
@@ -128,6 +139,13 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
 
   async function onSubmit(values: FormValues) {
     if (!user) return
+    
+    // Final safety check for deadline
+    if (Date.now() > DEADLINE) {
+      setIsExpired(true)
+      toast.error('The deadline has passed. We can no longer accept submissions.')
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -147,23 +165,42 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
       }
 
       await set(applicationRef, applicationData)
-
       toast.success('Application submitted successfully!')
       setSubmitted(true)
       form.reset()
       if (onSuccess) onSuccess()
     } catch (error: any) {
       console.error('Submission error:', error)
-      if (error?.code === 'PERMISSION_DENIED' || error?.message?.includes('Permission denied')) {
-        toast.error('Database permission error. Please contact admin.')
-      } else {
-        toast.error('Failed to submit application. Please try again.')
-      }
+      toast.error('Failed to submit application. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
+  // UI for Closed Applications
+  if (isExpired) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto border-red-200 bg-red-50/30">
+        <CardContent className="pt-12 pb-12 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="rounded-full bg-red-100 p-3">
+              <Clock className="w-8 h-8 text-red-600" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold mb-2 text-red-900">Applications Closed</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            The deadline for KIMUN 2026 applications (March 14, 11:59 PM) has passed. 
+            We are no longer accepting new responses.
+          </p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // UI for Success State
   if (submitted) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
@@ -175,7 +212,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
           </div>
           <h2 className="text-2xl font-bold mb-2">Application Submitted!</h2>
           <p className="text-muted-foreground mb-6">
-            Thank you for submitting your application to KIMUN 2026. Our admin team will review your application and you'll receive updates via email.
+            Thank you for applying to KIMUN 2026. You'll receive updates via email.
           </p>
           <Button
             onClick={() => {
@@ -196,7 +233,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
       <CardHeader>
         <CardTitle>KIMUN 2026 Application Form</CardTitle>
         <CardDescription>
-          Fill out the form below to apply for Kalinga International Model United Nations 2026
+          Deadline: March 14, 2026 | 11:59 PM
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -253,7 +290,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
                   <FormControl>
                     <Input type="email" {...field} readOnly className="bg-muted" />
                   </FormControl>
-                  <FormDescription>Your email is linked to your Google account</FormDescription>
+                  <FormDescription>Linked to your Google account</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -323,7 +360,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
                     <div className="flex-1">
                       <FormControl>
                         <Textarea
-                          placeholder="Tell us your motivation and what you hope to gain..."
+                          placeholder="Tell us your motivation..."
                           className="resize-none"
                           rows={4}
                           {...field}
