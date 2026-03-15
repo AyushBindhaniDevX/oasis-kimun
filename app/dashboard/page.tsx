@@ -12,7 +12,7 @@ import {
   LogOut, Zap, Search, ShieldCheck, 
   Loader2, Download, ExternalLink, Clock,
   Plus, Filter, MoreVertical, Edit, Trash2,
-  CheckCircle, XCircle, AlertCircle, Mail,
+  CheckCircle, CheckCircle2, XCircle, AlertCircle, Mail,
   Bell, Award, Target, TrendingUp, Upload,
   ChevronLeft, ChevronRight, CalendarDays,
   Briefcase, GraduationCap, Heart, Coffee,
