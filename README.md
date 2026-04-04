@@ -54,8 +54,21 @@ A complete two-sided application and screening portal for Kalinga International 
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
-   cd kimun-portal
+ 
+ Firebase setup (local only)
+ - Add your Realtime Database URL to `.env.local`:
+   - `FIREBASE_DATABASE_URL=https://your-project.firebaseio.com`
+ - Provide a Firebase service account for server-side scripts (migration):
+   - Option A (recommended): place the JSON file at `serviceAccountKey.json` in the project root (this file is gitignored).
+   - Option B: set the full JSON string in the `SERVICE_ACCOUNT_JSON` env var.
+ - After adding credentials, run the participants migration if needed:
+   ```bash
+   npm run migrate:participants
+   ```
+ - To deploy database rules:
+   ```bash
+   npm run deploy:db
+   ```
    ```
 
 2. **Install dependencies**

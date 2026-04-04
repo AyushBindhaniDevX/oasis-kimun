@@ -29,8 +29,7 @@ import {
   Info, MessageSquare, Moon, Sun,
   ChevronUp, PlusCircle, MinusCircle,
   Archive, FolderOpen, Image, Paperclip,
-  Link2, Lock, Unlock, Wifi, WifiOff
-} from 'lucide-react'
+Link2, Lock, Unlock, Wifi, WifiOff, KeyRound} from 'lucide-react'
 import { ref, onValue, update, set, remove, push } from 'firebase/database'
 import { getDatabase } from '@/lib/firebase'
 import { evaluateApplication } from '@/lib/ai-service'
@@ -44,7 +43,7 @@ import { Switch } from '@/components/ui/switch'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -52,6 +51,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { MessagingDialog } from '@/components/messaging-dialog'
+import ChatPanel from '@/components/chat/ChatPanel'
+import { Sidebar } from '@/components/dashboard/Sidebar'
+import { AmbientBackdrop } from '@/components/dashboard/shell/AmbientBackdrop'
+import { useSingleSession } from '@/hooks/use-single-session'
+import { playUiSound } from '@/lib/play-sound'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -352,12 +356,20 @@ const NAV_ITEMS = [
   { id: 'calendar', label: 'Calendar', icon: CalendarDays },
   { id: 'tasks', label: 'Tasks', icon: CheckSquare },
   { id: 'chat', label: 'Chat', icon: MessageCircle },
+  { id: 'access', label: 'Access', icon: KeyRound },
   { id: 'profile', label: 'Profile', icon: User },
 ]
 
 export default function AdminPage() {
   const { user, logout, loading: authLoading } = useAuth()
   const router = useRouter()
+  
+  // If the user visits /admin directly, redirect to /dashboard (single entry point)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/admin') {
+      router.replace('/dashboard')
+    }
+  }, [router])
   
   // Data states
   const [applications, setApplications] = useState<Application[]>([])
@@ -464,6 +476,12 @@ export default function AdminPage() {
   const [availableApplications, setAvailableApplications] = useState<Application[]>([])
   const [darkMode, setDarkMode] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
+  const [accessRows, setAccessRows] = useState<
+    { uid: string; approved?: boolean; email?: string; displayName?: string; requestedAt?: string }[]
+  >([])
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
+  useSingleSession(user?.uid, Boolean(user && !authLoading))
 
   // --- Data Fetching ---
   useEffect(() => {
@@ -568,6 +586,17 @@ export default function AdminPage() {
       setTeamChatMessages(data)
     })
 
+    const unsubscribeAccess = onValue(ref(db, 'accessControl'), (snapshot) => {
+      const rows: { uid: string; approved?: boolean; email?: string; displayName?: string; requestedAt?: string }[] =
+        []
+      if (snapshot.exists()) {
+        snapshot.forEach((child) => {
+          rows.push({ uid: child.key as string, ...child.val() })
+        })
+      }
+      setAccessRows(rows)
+    })
+
     return () => {
       unsubscribeApps()
       unsubscribeMembers()
@@ -577,6 +606,7 @@ export default function AdminPage() {
       unsubscribeDocs()
       unsubscribeSlots()
       unsubscribeTeamChat()
+      unsubscribeAccess()
     }
   }, [user, router, authLoading])
 
@@ -1356,19 +1386,43 @@ export default function AdminPage() {
     )
   }
 
+  const approvePlatformAccess = async (targetUid: string) => {
+    try {
+      const db = getDatabase()
+      await update(ref(db, `accessControl/${targetUid}`), {
+        approved: true,
+        approvedAt: new Date().toISOString(),
+        approvedBy: user?.uid ?? '',
+      })
+      toast.success('Platform access granted')
+      playUiSound('success')
+    } catch (e) {
+      console.error(e)
+      toast.error('Could not update access')
+    }
+  }
+
+  const sidebarBadges: Record<string, number> = {
+    applications: statistics.pendingReview,
+    members: statistics.teamStats.pendingInvites,
+    tasks: statistics.taskStats.overdue,
+    calendar: statistics.eventStats.upcoming,
+    access: accessRows.filter((r) => r.approved !== true).length,
+  }
+
   // Render content based on active navigation
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
         return (
-          <div className="space-y-4 p-4 pb-24">
+          <div className="space-y-4 p-4 pb-8">
             {/* Welcome Card */}
             <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-bold mb-1">Welcome back, {user?.displayName?.split(' ')[0]}! 👋</h2>
-                    <p className="text-blue-100 text-sm">KIMUN 2026 • Digital Secretariat</p>
+                    <p className="text-blue-100 text-sm">Oasis Platform • Admin Portal</p>
                   </div>
                   <Avatar className="h-16 w-16 border-4 border-white/30">
                     <AvatarImage src={user?.photoURL || undefined} />
@@ -1508,7 +1562,7 @@ export default function AdminPage() {
 
       case 'applications':
         return (
-          <div className="space-y-4 p-4 pb-24">
+          <div className="space-y-4 p-4 pb-8">
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">Applications</h2>
@@ -1684,7 +1738,7 @@ export default function AdminPage() {
 
       case 'members':
         return (
-          <div className="space-y-4 p-4 pb-24">
+          <div className="space-y-4 p-4 pb-8">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -1824,7 +1878,7 @@ export default function AdminPage() {
 
       case 'calendar':
         return (
-          <div className="space-y-4 p-4 pb-24">
+          <div className="space-y-4 p-4 pb-8">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1952,7 +2006,7 @@ export default function AdminPage() {
 
       case 'tasks':
         return (
-          <div className="space-y-4 p-4 pb-24">
+          <div className="space-y-4 p-4 pb-8">
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">Tasks</h2>
@@ -2059,7 +2113,7 @@ export default function AdminPage() {
 
       case 'chat':
         return (
-          <div className="flex flex-col h-[calc(100vh-120px)] p-4 pb-24">
+          <div className="flex flex-col h-[calc(100vh-120px)] p-4 pb-8">
             <h2 className="text-lg font-bold mb-4">Team Chat</h2>
             
             <Card className="flex-1 flex flex-col">
@@ -2120,9 +2174,47 @@ export default function AdminPage() {
           </div>
         )
 
+      case 'access': {
+        const pending = accessRows.filter((r) => r.approved !== true)
+        return (
+          <div className="space-y-6 p-4 md:p-6">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Platform access</h2>
+              <p className="text-sm text-slate-400">
+                Approve new accounts. Users are limited to one active session; signing in elsewhere signs out the
+                previous device.
+              </p>
+            </div>
+            {pending.length === 0 ? (
+              <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-8 text-center text-sm text-slate-400">
+                No pending access requests.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {pending.map((row) => (
+                  <div
+                    key={row.uid}
+                    className="glass-panel flex flex-col gap-3 rounded-2xl border border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-white">{row.displayName ?? 'Unknown user'}</p>
+                      <p className="text-sm text-slate-400">{row.email ?? row.uid}</p>
+                      <p className="mt-1 font-mono text-[10px] text-slate-500">{row.uid}</p>
+                    </div>
+                    <Button className="shrink-0 bg-emerald-600 hover:bg-emerald-500" onClick={() => approvePlatformAccess(row.uid)}>
+                      Approve access
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      }
+
       case 'profile':
         return (
-          <div className="space-y-4 p-4 pb-24">
+          <div className="space-y-4 p-4 pb-8">
             {/* Profile Header */}
             <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
               <CardContent className="p-6 text-center">
@@ -2218,70 +2310,88 @@ export default function AdminPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-slate-50 ${darkMode ? 'dark' : ''}`}>
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-blue-600" />
-            <span className="font-bold text-sm">OASIS Admin</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-4 h-4" />
-              {notifications.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full" />
-              )}
-            </Button>
-            <Avatar className="h-8 w-8 cursor-pointer" onClick={() => setActiveNav('profile')}>
-              <AvatarImage src={user?.photoURL || undefined} />
-              <AvatarFallback className="bg-blue-100 text-blue-600">
-                {user?.displayName?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-      </header>
+    <div className={`relative min-h-svh overflow-hidden text-slate-100 ${darkMode ? 'dark' : ''}`}>
+      <AmbientBackdrop />
 
-      {/* Main Content */}
-      <main className="pb-20">
-        {renderContent()}
-      </main>
+      <div className="relative z-10 flex min-h-svh flex-col">
+        <header className="glass-panel sticky top-0 z-40 border-b border-white/10">
+          <div className="flex h-14 items-center justify-between px-3 md:px-4">
+            <div className="flex items-center gap-2">
+              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white md:hidden" aria-label="Open menu">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] border-white/10 bg-slate-950/95 p-0">
+                  <SheetHeader className="border-b border-white/10 p-4 text-left">
+                    <SheetTitle className="text-white">Navigation</SheetTitle>
+                  </SheetHeader>
+                  <Sidebar
+                    items={NAV_ITEMS}
+                    active={activeNav}
+                    onSelect={(id) => {
+                      setActiveNav(id)
+                      setMobileNavOpen(false)
+                    }}
+                    badges={sidebarBadges}
+                    title="Oasis"
+                    subtitle="Admin"
+                  />
+                </SheetContent>
+              </Sheet>
+              <ShieldCheck className="hidden h-5 w-5 text-indigo-300 sm:block" />
+              <span className="text-sm font-semibold tracking-tight text-white">Oasis Admin</span>
+            </div>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-2 py-1">
-        <div className="flex items-center justify-around">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon
-            const isActive = activeNav === item.id
-            let badgeCount = 0
-            
-            if (item.id === 'applications') badgeCount = statistics.pendingReview
-            if (item.id === 'members') badgeCount = statistics.teamStats.pendingInvites
-            if (item.id === 'tasks') badgeCount = statistics.taskStats.overdue
-            if (item.id === 'calendar') badgeCount = statistics.eventStats.upcoming
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveNav(item.id)}
-                className={`relative flex flex-col items-center py-2 px-3 rounded-xl transition-colors ${
-                  isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] mt-1 font-medium">{item.label}</span>
-                {badgeCount > 0 && (
-                  <span className="absolute top-0 right-2 min-w-[16px] h-4 bg-rose-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center px-1">
-                    {badgeCount > 9 ? '9+' : badgeCount}
-                  </span>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="relative text-slate-200">
+                <Bell className="h-4 w-4" />
+                {notifications.length > 0 && (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />
                 )}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+              </Button>
+              <Avatar className="h-8 w-8 cursor-pointer border border-white/20" onClick={() => setActiveNav('profile')}>
+                <AvatarImage src={user?.photoURL || undefined} />
+                <AvatarFallback className="bg-indigo-600 text-white">
+                  {user?.displayName?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex flex-1 overflow-hidden">
+          <aside className="hidden w-56 shrink-0 border-r border-white/10 md:block">
+            <Sidebar
+              items={NAV_ITEMS}
+              active={activeNav}
+              onSelect={setActiveNav}
+              badges={sidebarBadges}
+              title="Oasis"
+              subtitle="Admin"
+            />
+          </aside>
+
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+            <div className="grid grid-cols-12 gap-4 lg:gap-6">
+              <section className="col-span-12 lg:col-span-8">{renderContent()}</section>
+              <aside className="col-span-12 hidden lg:col-span-4 lg:block">
+                <div className="sticky top-16 p-4">
+                  <div className="glass-panel rounded-2xl border border-white/10 p-3">
+                    <ChatPanel
+                      mode="room"
+                      currentUserId={user?.uid || ''}
+                      currentUserName={user?.displayName || ''}
+                      showSidebar={true}
+                    />
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </main>
+      </div>
 
       {/* Dialogs - Keeping all existing dialogs */}
       

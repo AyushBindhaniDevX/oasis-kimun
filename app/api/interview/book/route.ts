@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sendResendEmail } from '@/lib/email'
 
 const DEFAULT_CAL_API_BASE = 'https://api.cal.com/v2'
 // Cal.com v2 requires this version header for the bookings endpoint
@@ -77,6 +78,20 @@ export async function POST(request: Request) {
 
     const calPayload = await calResponse.json()
     const booking = calPayload?.data || calPayload
+    // Notify attendee via email (best-effort)
+    try {
+      const bookingUrl = booking?.bookingUrl || booking?.url || process.env.CAL_BOOKING_PAGE_URL || null
+
+      const html = (await import('@/lib/email-templates')).interviewScheduledTemplate({
+        name,
+        slotStart,
+        bookingUrl,
+      })
+
+      await sendResendEmail({ to: email, subject: 'Oasis — Interview Scheduled', html })
+    } catch (emailErr) {
+      console.error('Failed to send booking email:', emailErr)
+    }
 
     return NextResponse.json({
       booking: {

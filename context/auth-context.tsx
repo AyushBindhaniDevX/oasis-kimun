@@ -82,6 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
     } catch (error) {
+      const err: any = error;
+      // User closed the OAuth popup — not an actionable error.
+      if (err?.code === 'auth/popup-closed-by-user' || err?.message?.includes('popup closed')) {
+        console.info('Sign in popup closed by user');
+        return;
+      }
       console.error('Sign in error:', error);
       throw error;
     }

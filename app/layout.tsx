@@ -4,19 +4,20 @@ import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/context/auth-context'
 import { ThemeProvider } from '@/components/theme-provider'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'KIMUN 2026 - OASIS',
-  description: 'Kalinga International Model United Nations 2026 Application & Screening Portal',
+  title: 'Oasis - Recruitment & Cohort Management Platform',
+  description: 'Streamline recruitment, onboarding, and cohort management for student organizations.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'KIMUN OASIS',
+    title: 'Oasis Platform',
   },
   icons: {
     icon: [
@@ -39,10 +40,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="dark">
-      <body className="font-sans antialiased min-h-screen">
+      <body className="font-sans antialiased min-h-svh">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
           <AuthProvider>
             {children}
+            <Toaster theme="dark" richColors closeButton position="top-center" />
             <PwaInstallPrompt />
           </AuthProvider>
         </ThemeProvider>

@@ -25,17 +25,17 @@ export async function generateFormSuggestions(fieldName: string, userInput: stri
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are assisting applicants for KIMUN 2026 (Kalinga International Model United Nations).
+              text: `You are assisting applicants for Oasis Platform.
 
-Field: ${fieldName}
-Current Input: "${userInput}"
-Context: ${context}
+  Field: ${fieldName}
+  Current Input: "${userInput}"
+  Context: ${context}
 
-Task:
-Improve this field professionally in 1–2 sentences.
-If the input is empty, generate a strong example answer.
+  Task:
+  Improve this field professionally in 1–2 sentences.
+  If the input is empty, generate a strong example answer.
 
-Return ONLY the improved text.`
+  Return ONLY the improved text.`
             }]
           }],
           generationConfig: {
@@ -105,25 +105,25 @@ export async function evaluateApplication(applicationData: Record<string, any>, 
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are evaluating candidates for the KIMUN 2026 Organizing Committee.
+              text: `You are evaluating candidates for the Oasis Platform organizing committee.
 
-Candidate Data:
-${JSON.stringify(applicationData)}
+  Candidate Data:
+  ${JSON.stringify(applicationData)}
 
-Return ONLY valid JSON.
+  Return ONLY valid JSON.
 
-Schema:
-{
- "score": number,
- "assessment": string,
- "strengths": string[],
- "improvements": string[]
-}
+  Schema:
+  {
+   "score": number,
+   "assessment": string,
+   "strengths": string[],
+   "improvements": string[]
+  }
 
-Rules:
-- No markdown
-- No explanation
-- Only JSON`
+  Rules:
+  - No markdown
+  - No explanation
+  - Only JSON`
             }]
           }],
           generationConfig: {

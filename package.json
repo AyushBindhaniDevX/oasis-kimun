@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "deploy:db": "firebase deploy --only database"
+    "deploy:db": "firebase deploy --only database",
+    "sync:tokens": "node ./scripts/sync-tokens.js",
+    "migrate:participants": "node ./scripts/migrate-participants.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -49,6 +51,7 @@
     "embla-carousel-react": "8.6.0",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
+    "framer-motion": "^12.38.0",
     "input-otp": "1.4.2",
     "jsonrepair": "^3.13.2",
     "jspdf": "^4.2.0",

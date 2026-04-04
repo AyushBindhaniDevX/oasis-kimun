@@ -32,7 +32,7 @@ import { getDatabase } from '@/lib/firebase'
 import { useAuth } from '@/context/auth-context'
 
 // Define the hard deadline: March 14, 2026, 11:59:59 PM
-const DEADLINE = new Date('2026-03-15T23:59:59').getTime()
+const DEADLINE = new Date('2026-04-15T23:59:59').getTime()
 
 const formSchema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -114,7 +114,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
       const suggestion = await generateFormSuggestions(
         fieldName,
         currentValue,
-        `KIMUN 2026 ${fieldName} field for ${form.getValues('school') || 'your school'}`
+        `Oasis Platform ${fieldName} field for ${form.getValues('school') || 'your school'}`
       )
       if (suggestion) {
         setAiSuggestions(prev => ({ ...prev, [fieldName]: suggestion }))
@@ -165,6 +165,22 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
       }
 
       await set(applicationRef, applicationData)
+
+      // Send acknowledgement email via server API (Resend)
+      try {
+        await fetch('/api/email/send/template', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            template: 'application_received',
+            data: { to: applicationData.email, fullName: applicationData.fullName },
+          }),
+          cache: 'no-store',
+        })
+      } catch (emailErr) {
+        console.error('Failed to send application email:', emailErr)
+      }
+
       toast.success('Application submitted successfully!')
       setSubmitted(true)
       form.reset()
@@ -189,7 +205,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
           </div>
           <h2 className="text-2xl font-bold mb-2 text-red-900">Applications Closed</h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            The deadline for KIMUN 2026 applications (March 14, 11:59 PM) has passed. 
+            The application deadline has passed.
             We are no longer accepting new responses.
           </p>
           <Button variant="outline" onClick={() => window.location.reload()}>
@@ -212,7 +228,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
           </div>
           <h2 className="text-2xl font-bold mb-2">Application Submitted!</h2>
           <p className="text-muted-foreground mb-6">
-            Thank you for applying to KIMUN 2026. You'll receive updates via email.
+            Thank you for applying to Oasis Platform. You'll receive updates via email.
           </p>
           <Button
             onClick={() => {
@@ -231,7 +247,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>KIMUN 2026 Application Form</CardTitle>
+        <CardTitle>Oasis Application Form</CardTitle>
         <CardDescription>
           Deadline: March 14, 2026 | 11:59 PM
         </CardDescription>
@@ -355,7 +371,7 @@ export function CandidateForm({ initialValues, onSuccess }: CandidateFormProps) 
               name="motivation"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Why do you want to join KIMUN 2026?</FormLabel>
+                  <FormLabel>Why do you want to join Oasis Platform?</FormLabel>
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <FormControl>

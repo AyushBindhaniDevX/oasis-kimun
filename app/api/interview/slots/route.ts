@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       slots,
-      bookingLink: process.env.CAL_BOOKING_PAGE_URL || `https://cal.com/${process.env.CAL_USERNAME}/kimun-2026`
+      bookingLink: process.env.CAL_BOOKING_PAGE_URL || `https://cal.com/${process.env.CAL_USERNAME || 'oasis-platform'}`
     })
 
   } catch (error: any) {
