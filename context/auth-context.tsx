@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { User, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, getIdTokenResult } from 'firebase/auth';
 import { auth, getFirebaseDb } from '@/lib/firebase';
 import { ref, get } from 'firebase/database';
 
@@ -30,32 +30,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
           if (currentUser) {
             try {
-              // Check admin status via client SDK (requires DB rules that allow
-              // reading/writing the user's own admin record).
-              const db = getFirebaseDb()
-              const adminRef = ref(db, `admins/${currentUser.uid}`)
-              const adminSnapshot = await get(adminRef)
+              // Prefer checking admin via ID token custom claim
+              const idToken = await getIdTokenResult(currentUser)
+              const isAdminClaim = !!(idToken && idToken.claims && (idToken.claims as any).admin)
 
-              const authUser: AuthUser = {
-                ...currentUser,
-                role: adminSnapshot.exists() ? 'admin' : 'candidate',
+              // Allow a dev override via NEXT_PUBLIC_DEV_ADMIN_UID for local development
+              const devAdmin = process.env.NEXT_PUBLIC_DEV_ADMIN_UID && process.env.NEXT_PUBLIC_DEV_ADMIN_UID === currentUser.uid
+
+              if (isAdminClaim || devAdmin) {
+                setUser({ ...currentUser, role: 'admin' })
+                return
               }
-              setUser(authUser)
-            } catch (error: any) {
-              // If permission denied, assume candidate role
-              if (error?.code === 'PERMISSION_DENIED' || error?.message?.includes('Permission denied')) {
+
+              // Fallback: try reading legacy `admins/${uid}` entry if present (may be blocked by rules)
+              try {
+                const db = getFirebaseDb()
+                const adminRef = ref(db, `admins/${currentUser.uid}`)
+                const adminSnapshot = await get(adminRef)
                 const authUser: AuthUser = {
                   ...currentUser,
-                  role: 'candidate'
+                  role: adminSnapshot.exists() ? 'admin' : 'candidate',
                 }
                 setUser(authUser)
-              } else {
-                console.error('Error checking admin status:', error)
-                setUser({
-                  ...currentUser,
-                  role: 'candidate'
-                })
+                return
+              } catch (innerErr) {
+                // If reading admins is not permitted, default to candidate (non-blocking)
+                console.warn('Could not read admins node, defaulting to candidate role', innerErr)
+                setUser({ ...currentUser, role: 'candidate' })
+                return
               }
+            } catch (error: any) {
+              console.error('Error checking admin status:', error)
+              setUser({ ...currentUser, role: 'candidate' })
             }
           } else {
             setUser(null)
